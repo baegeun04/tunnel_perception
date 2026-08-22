@@ -1,0 +1,43 @@
+from glob import glob
+from setuptools import find_packages, setup
+
+package_name = 'vision_pipeline'
+
+setup(
+    name=package_name,
+    version='0.0.0',
+    packages=find_packages(exclude=['test']),
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+        ('share/' + package_name + '/config', glob('config/*.yaml')),
+    ],
+    package_data={
+        package_name: ['models/*.pt'],
+    },
+    include_package_data=True,
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='jeon',
+    maintainer_email='jeon@todo.todo',
+    description='YOLO + depth fusion node for tunnel rescue robot',
+    license='Apache-2.0',
+    extras_require={
+        'test': [
+            'pytest',
+        ],
+    },
+    entry_points={
+        'console_scripts': [
+            'yolo_depth_publisher = vision_pipeline.yolo_depth_publisher:main',
+            'rf_detr_depth_publisher = vision_pipeline.rf_detr_depth_publisher:main',
+            'motion_tracker_node = vision_pipeline.motion_tracker_node:main',
+            'thermal_publisher = vision_pipeline.thermal_publisher:main',
+            'thermal_blob_node = vision_pipeline.thermal_blob_node:main',
+            'rescue_priority_node = vision_pipeline.rescue_priority_node:main',
+            'perception_node = vision_pipeline.perception_node:main',
+        ],
+    },
+)

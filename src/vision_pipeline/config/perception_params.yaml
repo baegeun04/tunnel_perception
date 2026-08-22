@@ -1,0 +1,64 @@
+# perception_params.yaml — 역할 B 인지 파이프라인 파라미터
+#
+# 주의
+#   자세 판정 파라미터(angle_thr 60 / fallback 70 / angle_max 120 /
+#   window 10 / min_valid 4)는 여기 없습니다. 계약에 서명된 값이므로
+#   posture_judge.py 의 PostureConfig 에 그대로 둡니다. 실수로 덮어쓰면
+#   계약 위반이 조용히 일어나기 때문입니다.
+
+perception_node:
+  ros__parameters:
+
+    # ---- 입력 토픽 (C1 실측으로 확정) ----------------------------
+    color_topic: "/camera/color/image_raw"
+    depth_topic: "/camera/depth/image_raw"
+    info_topic: "/camera/color/camera_info"
+
+    # ---- color/depth 동기화 --------------------------------------
+    # 2026-08-18 오후 보고 §1: 이 값에서 동기화가 실패했습니다.
+    # 근본 원인은 color 프레임률(2모델 동시 실행 시 8.4Hz)이며,
+    # slop 을 올리는 것은 해결이 아니라 오차를 숨기는 것입니다.
+    #
+    # 기본값은 0.1 을 유지합니다. 실험할 때만 실행 인자로 덮어쓰세요.
+    #   ros2 launch vision_pipeline perception.launch.py sync_slop:=0.3
+    sync_slop: 0.1
+    sync_queue_size: 10
+
+    # ---- Fire-Smoke (V1 발행 모델 = v9) ---------------------------
+    fire_conf: 0.38
+    fire_num_classes: 3
+
+    # ---- Pose ----------------------------------------------------
+    pose_model_path: "yolo11n-pose.pt"
+    pose_conf: 0.5
+
+    # ---- 발행 정책 ------------------------------------------------
+    min_conf: 0.25          # 계약 C4: publisher 하한
+    use_gravity: false      # 계약 N8: M2 회신 후 true
+    debug_pose: true
+
+    # ---- Depth (계약 A5 / C5 / A9-1) ------------------------------
+    depth_min_m: 0.3
+    depth_max_m: 8.0
+    depth_min_px: 30
+    depth_min_valid_frac: 0.5
+
+
+rescue_priority_node:
+  ros__parameters:
+
+    # 계약 밖 역할 B 자체 판정 노드입니다.
+    thermal_human_min: 30.0
+    thermal_human_max: 40.0
+
+    # 불 근처 판정 거리. use_3d_proximity=true 면 3D 유클리드 거리,
+    # false 면 기존처럼 깊이(x)축만 비교합니다.
+    depth_match_threshold: 1.5
+    use_3d_proximity: true
+
+    # 입력이 이 시간을 넘겨 끊기면 마지막 값으로 판정하지 않습니다.
+    stale_timeout_sec: 5.0
+
+    # /detections 는 20Hz 로 오지만 판정은 이 주기입니다.
+    # 최대 (1/eval_rate_hz) 만큼 지연이 더해집니다.
+    eval_rate_hz: 1.0
